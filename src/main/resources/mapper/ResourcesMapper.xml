@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pyq.mapper.ResourcesMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.pyq.entity.Resources">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="resUrl" property="resUrl" />
+        <result column="type" property="type" />
+        <result column="parentId" property="parentId" />
+        <result column="sort" property="sort" />
+    </resultMap>
+
+    <select id="queryAll" resultType="com.pyq.entity.Resources">
+      	SELECT id,name,parentId,resUrl,type,sort
+		FROM resources
+		ORDER BY sort ASC
+    </select>
+
+    <select id="loadUserResources" resultType="com.pyq.entity.Resources" parameterType="java.util.Map">
+        SELECT re.id,re.name,re.parentId,re.resUrl
+        FROM resources re LEFT JOIN role_resources rr
+        ON re.id = rr.resourcesId
+        LEFT JOIN user_role ur
+        ON rr.roleId =ur.roleId
+        WHERE ur.userId=#{userid}
+        <if test="type != null">
+            AND re.type= #{type}
+        </if>
+        GROUP BY re.id
+        ORDER BY re.sort ASC
+    </select>
+
+    <select id="queryResourcesListWithSelected" parameterType="int" resultType="com.pyq.entity.Resources">
+        SELECT re.id,re.name,re.parentId,re.resUrl,re.type,
+		(CASE WHEN EXISTS(SELECT 1
+		FROM role_resources rr WHERE rr.resourcesId=re.id AND rr.roleId=#{rid})
+		THEN 'true' ELSE 'false' END) AS checked
+		FROM resources re
+		WHERE re.parentId !=0
+		ORDER BY re.sort ASC
+    </select>
+
+</mapper>
